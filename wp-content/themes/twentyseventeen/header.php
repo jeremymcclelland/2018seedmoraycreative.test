@@ -23,6 +23,8 @@
 </head>
 
 <body <?php body_class(); ?>>
+
+
 <div id="page" class="site">
 	<a class="skip-link screen-reader-text" href="#content"><?php _e( 'Skip to content', 'twentyseventeen' ); ?></a>
 
@@ -40,6 +42,8 @@
 
 	</header><!-- #masthead -->
 
+
+
 	<?php
 
 	/*
@@ -55,3 +59,7 @@
 
 	<div class="site-content-contain">
 		<div id="content" class="site-content">
+			<?php 
+			$options = get_option('wpstitch_api_options');
+			$stitch_widget_data = $options['wpstitch_feed_data'];
+			var_dump($stitch_widget_data->{'name'})  ?>
