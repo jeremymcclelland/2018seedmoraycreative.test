@@ -145,6 +145,9 @@ class Wpstitch_Api_Feed_Widget extends WP_Widget {
 		extract($args);
 		$title = apply_filters( 'widget_title', $instance['title'] );
 
+		$num_badges = $instance['num_badges'];
+		$display_tooltips = $instance['display_tooltips'];
+
 		$options = get_option('wpstitch_api_options');
 		$stitch_widget_data = $options['wpstitch_feed_data'];
 
@@ -157,6 +160,8 @@ class Wpstitch_Api_Feed_Widget extends WP_Widget {
 		$instance = $old_instance;
 
 		$instance['title'] = strip_tags($new_instance['title']);
+		$instance['num_badges'] = strip_tags($new_instance['num_badges']);
+		$instance['display_tooltips'] = strip_tags($new_instance['display_tooltips']);
 
 		return $instance;
 	}
@@ -165,6 +170,11 @@ class Wpstitch_Api_Feed_Widget extends WP_Widget {
 		// Output admin widget options form
 
 		$title = esc_attr( $instance['title'] );
+		$num_badges = esc_attr( $instance['num_badges'] );
+		$display_tooltips = esc_attr( $instance['display_tooltips'] );
+
+		$options = get_option('wpstitch_api_options');
+		$stitch_widget_data = $options['wpstitch_feed_data'];
 
 		require( 'inc/widget-fields.php' );
 	}
@@ -177,8 +187,35 @@ function wpstitch_api_feed__register_widgets() {
 add_action( 'widgets_init', 'wpstitch_api_feed__register_widgets' );
 
 
+//////////////////////////////////
+
+function wpstitch_shortcode($atts, $content = null) {
+	global $post;
+
+	extract(shortcode_atts( array(
+		'num_badges' => '8',
+		'tooltip' => 'on'
+	), $atts ) );
 
 
+	if($tooltip == 'on') $tooltip = 1;
+	if($tooltip == 'off') $tooltip = 0;
+
+	$display_tooltips = $tooltip;
+
+	$options = get_option('wpstitch_api_options');
+	$stitch_widget_data = $options['wpstitch_feed_data'];
+
+	ob_start();
+
+	require( 'inc/front-end.php' );
+
+	$content = ob_get_clean();
+
+	return $content;
+}
+
+add_shortcode('wpstitch_data_shortcode', 'wpstitch_shortcode');
 
 //////////////////////////////////
 
@@ -195,10 +232,69 @@ function wpstitch_api_get_feed( $wpstitch_username ){
 }
 //////////////////////////////////
 
-function wpstitch_api_styles(){
-	wp_enqueue_style('wpstitch_api_styles', plugins_url('wpstitch-api/wpstitch-api-styles.css') );
+
+
+
+
+
+//This function refreshes feed via ajax
+
+function wpstitch_api_refresh_feed(){
+	$options = get_option('wpstitch_api_options');
+	$last_updated = $options['last_updated']; 
+
+	$current_time = time();
+
+	$update_difference = $current_time - $last_updated;
+
+	if( $update_difference > 86400 ){
+
+		$wpstitch_username = $options['wpstitch_username']; 
+
+		$options['wpstitch_feed_data'] = wpstitch_api_get_feed($wpstitch_username);
+		$options['last_updated'] = time();
+
+		update_option( 'wpstitch_api_options', $options);
+
+	}
+
+	die();
 }
-add_action( 'admin_head', 'wpstitch_api_styles' );
+
+
+//wp_ajax_ IS A COMMON TAG, THEN ADD FUNCTION NAME AFTER THAT wpstitch_api_refresh_feed
+add_action('wp_ajax_wpstitch_api_refresh_feed', 'wpstitch_api_refresh_feed');
+
+
+
+function wpstitch_enable_frontend_ajax() {
+?>
+
+<script>
+
+	var ajaxurl = '<?php echo admin_url("admin-ajax.php"); ?>';
+
+</script>
+
+
+<?php	
+}
+
+add_action('wp_head', 'wpstitch_enable_frontend_ajax');
+
+
+///////////////
+
+function wpstitch_api_backend_styles(){
+	wp_enqueue_style('wpstitch_api_backend_css', plugins_url('wpstitch-api/wpstitch-api-styles.css') );
+}
+add_action( 'admin_head', 'wpstitch_api_backend_styles' );
+
+function wpstitch_api_frontend_scripts_styles(){
+	wp_enqueue_style('wpstitch_api_backend_css', plugins_url('wpstitch-api/wpstitch-api-styles.css') );
+	wp_enqueue_script('wpstitch_api_backend_js', plugins_url('wpstitch-api/wpstitch-api-styles.js'), array('jquery'), '', true );
+}
+add_action( 'wp_enqueue_scripts', 'wpstitch_api_frontend_scripts_styles' );
 
 
 ?>

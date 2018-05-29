@@ -63,7 +63,14 @@
 
 							<ul class="wpstitch-badges">
 
-							<?php for( $i = 0; $i < 20; $i++ ): ?>
+							<?php 
+
+							$total_badges = count( $wpstitch_data->{'badges'} );
+
+							for( $i = $total_badges - 1; $i >= $total_badges - 20; $i-- ):		
+
+							?>
+
 							<li>
 								<ul>
 									<li>
